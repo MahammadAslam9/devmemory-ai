@@ -1,165 +1,82 @@
-# DevMemory AI
+# DevMemory AI 🧠
 
-> **HackWithHyderabad 3.0 Hackathon Project**  
-> *Theme: “AI Agents That Learn Using Hindsight”*
+> **Persistent Episodic Memory for SRE & DevOps Incident Response**  
+> Built with [Vectorize Hindsight](https://hindsight.vectorize.io/) and [Groq](https://groq.com/) for HackwithHyderabad 3.0.
 
-DevMemory AI is an intelligent developer assistant that eliminates context loss during coding, onboarding, and project maintenance by remembering:
-- Project technology stack
-- Architectural decisions and technical rationale
-- Previous bugs, edge cases, and troubleshooting history
-- Bug solutions, workarounds, and fixes
-- Developer preferences and coding standards
-- Important project context across conversations
-
-Powered by **Hindsight** for persistent semantic memory and **Groq LLM** for ultra-fast, contextual intelligence.
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Vectorize Hindsight](https://img.shields.io/badge/Memory-Hindsight-8A2BE2)](https://hindsight.vectorize.io/)
 
 ---
 
-## Technology Stack
-- **Frontend**: React + TypeScript + Vite
-- **Backend**: Node.js + TypeScript (Express REST API)
-- **Persistent Memory Engine**: Hindsight ([`@vectorize-io/hindsight-client`](https://www.npmjs.com/package/@vectorize-io/hindsight-client))
-- **LLM Reasoning**: Groq SDK (`groq-sdk`) using `openai/gpt-oss-120b`
+## 📌 Problem & Solution
+
+Traditional AI chatbots are stateless—they forget past outages, operational edge cases, and runbook fixes the moment a session ends. When production incidents recur, SRE and on-call teams are forced to diagnose the same issues from scratch.
+
+**DevMemory AI** integrates **Vectorize Hindsight** as an episodic vector memory layer. When an SRE inputs a technical post-mortem (such as **INC-9302**), the system stores exact commands, configuration flags, and remediation steps verbatim. When new raw error logs or recurring alerts appear in future sessions, DevMemory AI recalls historical resolutions and provides tested, actionable runbook commands in seconds.
 
 ---
 
-## Chat Memory Architecture & Flow
+## 🏗️ Architecture
 
+[ Incoming Logs / Queries ]│▼[ Log Preprocessor & Sanitizer ]  (Strips pod hashes, timestamps, and noise)│▼[ Vectorize Hindsight Bank ] <──────> [ Historical Post-Mortem Records ](Semantic Vector Recall)│▼[ Grounded Context Injection ]│▼[ Groq Inference ] ────────────> [ Precise Runbook Mitigation Output ]│▼[ Background Memory Retainer ] ────> [ Incremental Knowledge Storage ]
+- **Verbatim Incident Retention**: Preserves runbooks with exact CLI flags, scripts, and environment parameters without lossy LLM summarization.
+- **Log Signature Sanitization**: Cleans dynamic pod hashes and timestamps before semantic recall to optimize vector similarity matching.
+- **Grounded Runbook Citations**: Grounds Groq LLM generations in past post-mortems, returning exact configuration commands rather than generic checklists.
+- **Tenant Isolation**: Namespaces and scopes memory retrieval and retention per authenticated user ID.
+
+---
+
+## 🧪 Demo Scenario: INC-9302 Recurrence
+
+### 1. Ingestion Phase (Incident Baseline)
+Submit the post-mortem report into the system:
 ```text
-User Question / Context (Frontend)
-               ↓
-Backend REST API (`POST /api/chat`)
-               ↓
-Hindsight Recall (`recallMemories`)
-[Retrieves relevant project & developer memories]
-               ↓
-Groq LLM (`generateAnswer`)
-[Receives user message + recalled memories in system prompt]
-               ↓
-AI Generates Personalized Context-Aware Answer
-               ↓
-Hindsight Retain (`extractMemoryForRetention` & `retainMemory`)
-[Distills and retains concise, useful facts to durable memory bank]
-               ↓
-Frontend Receives Answer + "Memories DevMemory AI used"
-```
+Incident ID: INC-9302
+Service: product-catalog-service and redis-cluster-cache-node-03
+Root Cause: Cache Stampede / Thundering Herd caused by scheduled 09:12 marketing drop. Top 50 featured catalog keys expired simultaneously because TTL was set to a flat 24 hours with zero jitter.
+Applied Remediation:
+1. Rewarm cache keys with jitter: python3 /opt/scripts/cache_warmer.py --keys="product_catalog:featured:*" --jitter=300
+2. Temporarily bump client ceiling: redis-cli -h redis-cluster-cache-node-03.internal CONFIG SET maxclients 20000
+3. Enable client-side early expiration mutex: kubectl set env deployment/product-catalog-service ENABLE_PROBABILISTIC_EARLY_EXPIRATION=true -n prod
+Result: Stored directly in Hindsight memory bank devmemory-ai.2. Recurrence Phase (Simulated Production Outage)In a fresh chat session, submit raw production error logs:Plaintext2026-12-15T11:00:03.204Z [WARN] [product-catalog-service-pod-99fa12-px33m]: Cache miss spike detected (99.2%) on route '/api/v1/products/flash-deals'.
+2026-12-15T11:00:05.811Z [FATAL] [redis-cluster-cache-node-03]: Connection error: maxclients reached (10000/10000). Redis rejecting clients.
+2026-12-15T11:00:08.102Z [ERROR] [api-gateway-edge-prod]: HTTP 504 Gateway Timeout across 450 downstream requests.
+3. Agent ResponseThe agent recalls INC-9302, identifies the cache stampede and Redis connection limits, and provides the three exact remediation commands previously executed.💻 Tech StackComponentTechnologyPurposeFrontendReact, Vite, TypeScriptIncident response console and chat interfaceBackendNode.js, Express, TypeScriptAPI routing, authentication, query sanitizationMemory LayerVectorize HindsightEpisodic vector storage and semantic recallLLM InferenceGroqFast contextual response generation⚡ QuickstartPrerequisitesNode.js (v18+)npm1. Clone & InstallBashgit clone [https://github.com/MahammadAslam9/devmemory-ai.git](https://github.com/MahammadAslam9/devmemory-ai.git)
+cd devmemory-ai
 
----
+# Install backend dependencies
+cd backend
+npm install
 
-## Environment Configuration
-
-Create or update `backend/.env` (use `backend/.env.example` as a template):
-
-```env
-# Hindsight Configuration
-HINDSIGHT_BASE_URL=https://api.hindsight.vectorize.io
-HINDSIGHT_API_KEY=your_hindsight_api_key_here
+# Install frontend dependencies
+cd ../frontend
+npm install
+2. Environment ConfigurationCreate a .env file inside the backend/ directory:Code snippetPORT=5000
+GROQ_API_KEY=your_groq_api_key
+HINDSIGHT_API_KEY=your_hindsight_api_key
 HINDSIGHT_BANK_ID=devmemory-ai
-
-# Groq Configuration
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=openai/gpt-oss-120b
-
-# Backend Port (Optional)
-PORT=5000
-```
-
-> **Security Note**: All secrets reside strictly on the backend in `.env` (ignored by Git). Keys are never exposed to the client-side frontend.
-
----
-
-## Quickstart & Running the Project
-
-### 1. Run the Backend Server
-```powershell
-cd backend
+HINDSIGHT_BASE_URL=[https://api.hindsight.vectorize.io](https://api.hindsight.vectorize.io)
+3. Run LocallyTerminal 1 (Backend):Bashcd backend
 npm run dev
-```
-*(On Windows PowerShell with execution restrictions, use `npm.cmd run dev`)*  
-The backend will run at `http://localhost:5000`.
-
-### 2. Run the Frontend Client
-```powershell
-cd frontend
+Terminal 2 (Frontend):Bashcd frontend
 npm run dev
-```
-*(On Windows PowerShell, use `npm.cmd run dev`)*  
-The frontend will run at `http://localhost:5173` with Vite automatically proxying `/api` requests to the backend.
-
----
-
-## Testing & Verification Scripts
-
-### Test Hindsight Memory (Retain & Recall)
-```powershell
-cd backend
-npm run test:hindsight
-```
-
-### Test Complete Hindsight + Groq Chat Pipeline
-```powershell
-cd backend
-npm run test:chat
-```
-
----
-
-## API Endpoints Reference
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/health` | Health check returning status and service name |
-| `POST` | `/api/memory` | Retains a durable memory into Hindsight (`{ "content": "..." }`) |
-| `GET` | `/api/memories?query=...` | Recalls memories matching a semantic search query |
-| `POST` | `/api/chat` | Authenticated AI chat with user-isolated Hindsight recall/retain and conversation history |
-| `POST` | `/api/auth/register` | Create an account |
-| `POST` | `/api/auth/login` | Log in and receive a session token |
-| `GET` | `/api/conversations` | List the signed-in user’s chats |
-| `GET` | `/api/conversations/:id/messages` | Load one of the signed-in user’s chats |
-
----
-
-## Project Structure
-```text
-devmemory-ai/
-├── frontend/                     # React + TypeScript + Vite UI
-│   ├── src/
-│   │   ├── App.tsx               # Chat interface & memory visibility cards
-│   │   ├── index.css             # Dark modern developer UI styles
-│   │   └── main.tsx
-│   ├── vite.config.ts            # Vite config with backend /api proxy
-│   └── package.json
-├── backend/                      # Node.js + TypeScript REST API
+Open http://localhost:5173 in your browser.📂 Project StructurePlaintextdevmemory-ai/
+├── backend/
 │   ├── src/
 │   │   ├── services/
-│   │   │   ├── hindsight.ts      # Real Hindsight client (Retain & Recall)
-│   │   │   └── groq.ts           # Groq LLM service & memory distillation
-│   │   ├── index.ts              # API routes (/api/chat, /api/memory, /api/memories, /api/health)
-│   │   ├── test-hindsight.ts     # Verification script for Hindsight
-│   │   └── test-chat.ts          # Verification script for Chat pipeline
-│   ├── .env.example              # Environment variables template
-│   ├── .gitignore                # Protects .env and secrets
-│   └── package.json
-├── ai/                           # AI modules and prompt assets
-├── demo-data/                    # Sample developer memory datasets
-├── tests/                        # Automated test suites
-├── README.md                     # Comprehensive project documentation
-└── .gitignore                    # Root Git ignore rules
-```
-
-## Current MVP Features
-
-- User registration and login
-- User-isolated chat history
-- User-tagged Hindsight memories with server-side filtering
-- New Chat button
-- Responsive desktop/mobile chat layout
-- Voice input using browser speech recognition when supported
-- AI voice playback using browser speech synthesis
-- Short, focused AI answers
-- Hindsight memory inspector
-- No automatic prompt/recommendation cards on startup
-- SEO metadata and mobile-friendly viewport settings
-
-### Local persistence note
-The current hackathon MVP stores account/session/chat metadata in `backend/data/store.json` and keeps Hindsight as the semantic memory layer. For production deployment, replace this local JSON store with PostgreSQL and use a production session/authentication strategy.
+│   │   │   ├── hindsight.ts   # Hindsight recall & retention API integration
+│   │   │   ├── groq.ts        # Groq LLM inference routines
+│   │   │   └── store.ts       # User sessions and conversation management
+│   │   └── index.ts           # Express server, auth middleware & API routes
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx            # Chat UI & memory inspection panel
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
+├── .gitignore
+└── README.md
